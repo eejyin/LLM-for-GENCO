@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GENCO Studio · LLM for GENCO</title>
+  <link rel="stylesheet" href="/styles.css?v=0.4.0">
+  <link rel="icon" href="/assets/genco-mascot.png">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/" aria-label="GENCO Studio home">
+    <img src="/assets/genco-mascot.png" alt="GENCO grid mascot" width="76" height="76">
+    <div><span class="eyebrow">OPEN GRID FM · RESEARCH WORKSPACE</span><h1>GENCO <span>Studio</span></h1></div>
+  </a>
+  <div class="header-right"><span class="badge" id="health">Connecting to backend…</span><a href="https://arxiv.org/pdf/2608.09921#page=7" target="_blank" rel="noreferrer">Read paper ↗</a></div>
+</header>
+<main>
+  <section class="intro"><div><span class="eyebrow">UNDERSTAND · CONFIGURE · TRAIN · COMPARE</span><h2>From physics feedback to interpretable training experiments.</h2><p>Explore the model, configure training, and compare measured results in one workspace.</p></div><div class="context"><span>BACKEND</span><strong>gridfm-graphkit</strong><small id="backend-source">Detecting compute source…</small></div></section>
+  <section class="onboarding panel" aria-label="Getting started"><div><span class="kicker">START HERE · THREE STEPS</span><h3>New to GENCO? Start with a real grid case.</h3><p>GENCO is a learned power-system solver. The saved AC case below is a reference calculation, not a neural-network prediction.</p></div><div class="onboarding-steps"><button id="tour-results" class="secondary">1 · Inspect saved AC results →</button><button id="tour-architecture" class="secondary">2 · Explore model stages →</button><button id="tour-training" class="secondary">3 · Check training setup →</button></div><p class="hint">No training or LLM connection is required for steps 1–2. Training requires the GraphKit Python environment; Ollama is the default assistant provider.</p><p id="setup-warning" class="notice error" hidden role="alert"></p></section>
+  <section class="assistant panel">
+    <div class="section-head"><div><span class="kicker">01 / WORKFLOW</span><h3>GENCO assistant</h3></div><span class="route" id="route">READY</span></div>
+    <div class="assistant-tools">
+      <label>Route<select id="route-mode"><option value="">Auto-detect intent</option><option value="QUESTION_GENERAL">Architecture Q&A</option><option value="QUESTION_PARAMETER">Parameter Q&A</option><option value="PARAMETER">Change parameters</option><option value="GENERATION">Train current configuration</option><option value="ANALYSIS">Analyze results</option><option value="PLANNER">Plan a workflow</option></select></label>
+      <label>Analysis source<select id="chat-source"><option value="case">Saved power-flow case</option></select></label>
+      <button id="open-parameters" class="secondary">Open parameters ↗</button>
+    </div>
+    <div class="quick-actions" aria-label="Example prompts">
+      <button data-prompt="Explain the GENCO architecture and how the neural network is trained." data-route="QUESTION_GENERAL">Understand the model</button>
+      <button data-prompt="Explain what num_layers and base_weight change; do not modify them." data-route="QUESTION_PARAMETER">Explain parameters</button>
+      <button data-prompt="Set epochs to 3 and num_layers to 3." data-route="PARAMETER">Change parameters</button>
+      <button data-prompt="Start training using the current panel configuration." data-route="GENERATION">Start training</button>
+      <button data-prompt="Analyze the selected real results and generate a report." data-route="ANALYSIS">Generate report</button>
+      <button data-prompt="Set epochs to 3, train, then analyze the completed run." data-route="PLANNER">Plan experiment</button>
+    </div>
+    <div id="chat" class="chat" aria-live="polite"><div class="message bot">Choose an example, edit it, then send. Questions do not change settings. Training checks prerequisites first. Plans can run step by step or automatically.</div></div>
+    <form id="chat-form"><label class="sr-only" for="message">Instruction</label><textarea id="message" rows="2" placeholder="For example: explain how λ weights each stage, or plan a three-epoch experiment"></textarea><button type="submit" id="send">Send ↗</button></form>
+    <div class="chat-feedback"><span id="chat-progress" role="status">Ctrl / ⌘ + Enter to send · Examples are not submitted automatically</span><button id="undo-parameters" class="text-button" disabled>Undo last parameter change</button></div>
+    <div id="parameter-diff" class="parameter-diff" hidden></div>
+    <div id="plan" class="plan" hidden><strong>Experiment plan</strong><p class="hint">Runs from a configuration snapshot. Later panel edits do not alter this plan. Automatic execution continues only while this page stays open.</p><ol id="plan-steps"></ol><div class="plan-actions"><button id="advance" class="secondary">Run next step →</button><button id="auto-plan">Run remaining steps</button><button id="stop-plan" class="text-button">Stop plan</button></div><span id="plan-status" role="status"></span></div>
+  </section>
+  <div class="workspace">
+    <aside class="panel controls">
+      <div class="section-head"><div><span class="kicker">02 / PARAMETERS</span><h3>Training parameters</h3></div><button id="reset" class="text-button">Reset</button></div>
+      <label>GraphKit configuration<select id="config"></select></label>
+      <p id="config-meta" class="hint"></p>
+      <div class="presets"><span>Network width H</span><button data-width="12" class="secondary">Tiny · 12</button><button data-width="24" class="secondary">Small · 24</button><button data-width="48" class="secondary">Base · 48</button></div>
+      <p class="hint">Changes H only; all other settings stay as they are.</p>
+      <div id="parameter-fields"></div>
+      <label>Training data directory<input id="data-path" placeholder="Leave blank to use GraphKit tests/data"></label>
+      <div class="notice" id="validation">Parameters are saved to a YAML snapshot for each run.</div>
+      <button class="secondary wide" id="preflight">Check training prerequisites</button>
+      <div id="preflight-result" class="notice" hidden role="status"></div>
+      <button class="wide" id="train">▶ Start training</button>
+      <button class="secondary wide" id="export-config">Download current YAML</button>
+      <details class="model-settings" open><summary>Language model connection</summary><label>Provider<select id="provider"><option value="ollama">Ollama · local default</option><option value="openai">OpenAI API</option></select></label><label>Model<input id="model" list="model-list" value="llama3.1:8b"><datalist id="model-list"></datalist></label><button id="save-provider" class="secondary wide">Apply model settings</button><p id="model-status" class="hint"></p></details>
+    </aside>
+    <div class="content">
+      <nav class="tabs" aria-label="Workspace"><button data-tab="architecture" class="active">Architecture & training</button><button data-tab="results">Runs & results</button><button data-tab="reports">Analysis reports</button></nav>
+      <section id="architecture-tab" class="tab active">
+        <article class="panel architecture">
+          <div class="section-head"><div><span class="kicker">03 / MODEL EXPLORER</span><h3>How does GENCO learn?</h3></div><span class="badge" id="task-name">PowerFlow</span></div>
+          <p>A heterogeneous grid graph is projected and refined repeatedly. Each stage decodes electrical states, evaluates power-balance residuals, and feeds them into the next stage. Supervised and physics losses train the learnable weights.</p>
+          <div id="architecture-note" class="hint"></div>
+          <div class="architecture-flow">
+            <button class="stage" data-group="data"><span>01 · GRAPH</span><strong>Inputs & split</strong><small>bus / gen / branch<br>Known states + grid parameters</small></button>
+            <span class="arrow">→</span>
+            <button class="stage" data-group="projection"><span>02 · ENCODE</span><strong>MLP projection</strong><small id="projection-summary">H-dimensional latent space</small></button>
+            <span class="arrow">→</span>
+            <button class="stage" data-group="correction"><span>03 · REFINE × N</span><strong>Heterogeneous graph Transformer</strong><small id="correction-summary">Message passing / attention</small></button>
+          </div>
+          <div class="loop-flow">
+            <button class="stage" data-group="decoder"><span>04 · DECODE</span><strong>State & physics decoding</strong><small>Vm, θ → branch flows & injections</small></button>
+            <span class="arrow">→</span>
+            <button class="stage" data-group="loss"><span>05 · FEEDBACK</span><strong>Power-balance residual</strong><small>ΔP / ΔQ → residual MLP</small></button>
+            <div class="loop-label">↶ Feedback to next refinement<br><small>Learned residual encoding</small></div>
+          </div>
+          <div id="stage-detail" class="stage-detail">Select a stage to see its parameters and source-code location.</div>
+          <div class="training-strip"><button class="stage" data-group="loss"><span>TRAINING OBJECTIVE</span><strong>L = Σ αⱼ Lⱼ</strong><small>Supervised error + layerwise physics loss</small></button><span class="arrow">→</span><button class="stage" data-group="optimizer"><span>BACKPROPAGATION</span><strong>Backpropagation → AdamW</strong><small>learning_rate · batch_size · epochs</small></button></div>
+          <div class="loss-head"><h4>Physics-loss weight by refinement stage</h4><span id="weight-note" class="hint"></span></div><div id="weight-bars" class="weight-bars"></div>
+          <p class="hint">Local implementation: wᵢ = λ^(N−i) / Σ λ^(N−k), then multiply by the physics-loss mixing coefficient. These bars are computed from configuration, not measured training losses.</p>
+          <details><summary>Configuration preview & provenance</summary><p class="hint">Paper Fig. 3 / §4; parameter mappings follow the local source. PF, OPF, and SE use task-specific decoding. The selected configuration determines the actual task.</p><a href="https://arxiv.org/pdf/2608.09921#page=8" target="_blank" rel="noreferrer">GENCO paper architecture ↗</a><pre id="yaml-preview"></pre><p id="code-source" class="hint"></p></details>
+        </article>
+      </section>
+      <section id="results-tab" class="tab">
+        <article class="panel">
+          <div class="section-head"><div><span class="kicker">04 / RUNS</span><h3>Training & compute jobs</h3></div><button id="refresh-jobs" class="secondary">Refresh</button></div>
+          <label>Run history<select id="job-select"><option value="">Select a run</option></select></label>
+          <div class="run-actions"><span id="job-status">No run selected</span><button id="cancel-job" class="danger" disabled>Cancel job</button></div>
+          <pre id="job-log" class="job-log">Logs appear after a job starts.</pre>
+          <div class="loss-head"><h4>Recorded training metrics</h4><select id="metric-select"></select></div><div class="plot-wrap"><canvas id="loss-plot" aria-label="Recorded training metric curve"></canvas></div><p id="metric-note" class="hint">No synthetic curve is drawn when metrics are unavailable.</p>
+          <button id="training-report" class="secondary">Report on selected run →</button>
+        </article>
+        <article class="panel">
+          <div class="section-head"><div><span class="kicker">05 / POWER FLOW</span><h3>Power-flow results & benchmarks</h3></div><select id="case"></select></div>
+          <div class="metrics"><div><span>Minimum Vm / p.u.</span><strong id="vm">—</strong></div><div><span>Maximum Vm / p.u.</span><strong id="va">—</strong></div><div><span>Maximum P mismatch / MW</span><strong id="pb">—</strong></div></div>
+          <div class="plot-wrap large"><canvas id="plot" aria-label="Voltage magnitude comparison"></canvas></div><div id="plot-legend" class="legend"></div><p id="source" class="hint"></p>
+          <div class="benchmark-actions"><button id="benchmark" class="secondary">+ Saved PYPOWER</button><button data-engine="pandapower">Run pandapower</button><button data-engine="matpower" class="secondary">Run MATPOWER</button></div><div id="benchmark-results"></div>
+          <details><summary>Overlay GENCO prediction</summary><p class="hint">Import a single-scenario CSV with bus_id, vm_pu, va_deg. Match load, topology, and voltage settings to the selected case; buses are validated by ID.</p><input id="prediction-file" type="file" accept=".csv"><button id="import-prediction" class="secondary">Import and overlay GENCO</button></details>
+        </article>
+      </section>
+      <section id="reports-tab" class="tab">
+        <article class="panel">
+          <div class="section-head"><div><span class="kicker">06 / EVIDENCE</span><h3>Evidence-based comparison report</h3></div><a id="report-download" hidden>Download Markdown ↓</a></div>
+          <p>Reports use actual file statistics and run configurations. Two training runs can be compared by hyperparameters and recorded metrics; different cases support descriptive comparison only.</p>
+          <div class="report-controls"><label>Report type<select id="report-type"><option value="case">Saved power-flow results</option><option value="run">Training / benchmark / prediction</option></select></label><label>Primary case<select id="report-case"></select></label><label>Primary run<select id="report-run"></select></label><label>Compare run (optional)<select id="compare-run"></select></label><label>Compare case (optional)<select id="compare"></select></label></div>
+          <p id="report-warning" class="notice" hidden role="status"></p>
+          <button id="report">Generate evidence report</button><div id="report-box" class="report-box">Select data to generate a report. Ollama is the default model.</div><details><summary>Report evidence</summary><pre id="report-evidence"></pre></details>
+        </article>
+      </section>
+    </div>
+  </div>
+</main>
+<div id="notification" class="notification" hidden role="status"><span id="notification-text"></span><button id="dismiss-notification" class="text-button" aria-label="Dismiss notification">×</button></div>
+<footer>GENCO Studio · Local experiment workspace <span>Architecture follows the paper and local GraphKit; charts retain result provenance.</span></footer>
+<script src="/app.js?v=0.4.0"></script>
+</body>
+</html>
