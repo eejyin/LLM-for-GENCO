@@ -2,7 +2,6 @@
 
 A local, web-based workspace for learning the GENCO architecture, configuring GraphKit training, exploring recorded power-flow results, comparing AC solvers, and creating evidence-based reports. The assistant uses **Ollama by default** and can be switched to the OpenAI API. The GENCO mascot is shown at the upper-left of the interface.
 
-This README follows the **Summary → Motivation → Method → Results → Limitations** narrative of the [GENCO Challenge example discussion](https://huggingface.co/spaces/gridfm/genco-challenge/discussions/1). The screenshots below are from the running local application, not mockups.
 
 ## Summary: a five-minute path for power-system engineers
 
@@ -12,9 +11,9 @@ If you know power flow but have never used GENCO, follow the three buttons at th
 2. **Explore model stages.** Click a stage to see what electrical quantities it handles, which trainable components it uses, and which panel settings affect it.
 3. **Check training setup.** Preflight verifies the selected data and Python environment before any training job is submitted.
 
-![The three-step onboarding path in the local web app](docs/images/getting-started.png)
+![LLM for GENCO web interface with the three-step onboarding path](docs/images/llm-for-genco-overview.png)
 
-*Figure 1. The first screen separates reference AC data, architecture exploration, and the optional training environment.*
+*Figure 1. The LLM for GENCO home screen separates reference AC data, architecture exploration, and the optional training environment.*
 
 ## Motivation
 
